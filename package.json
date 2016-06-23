@@ -1,0 +1,21 @@
+{
+  "name": "silverlineCloud",
+  "version": "0.0.0",
+  "description": "zettaJS cloud server for silverline hub data",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cloud",
+    "silverline",
+    "zettajs"
+  ],
+  "author": "nicky lim",
+  "license": "ISC",
+  "dependencies": {
+    "http-status": "^0.2.3",
+    "zetta": "^1.1.0",
+    "zetta-led-mock-driver": "^0.10.0"
+  }
+}
