@@ -3,9 +3,10 @@
 // runs perpetually in background to wait for devices to come online.
 var Scout = require('zetta').Scout
 var util = require('util')
-var LED = require('./led')
-var Screen = require('./screen')
-var Sensor = require('./sensor')
+var LED = require('./devices/led')
+var Screen = require('./devices/screen')
+var PowerSensor = require('./devices/powersensor')
+var EnvSensor = require('./devices/envsensor')
  
 // inheritance
 var myScout = module.exports = function() {
@@ -33,8 +34,13 @@ myScout.prototype.init = function(next) {
    }, 1000);
      
    setTimeout( function() {
-       self.discover(Sensor, 'power-adapter');
+       self.discover(PowerSensor, 'power-adapter');
        console.log('power-adapter discovered')
+   }, 1000);
+    
+   setTimeout( function() {
+       self.discover(EnvSensor, 'env-sensor');
+       console.log('env-sensor discovered')
    }, 1000);
     
    var counter = 0;

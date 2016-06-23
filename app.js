@@ -8,18 +8,20 @@ module.exports = function(server) {
     var LED1Query = server.where( {type: 'led', name: 'led_1'} );
     var LED2Query = server.where( {type: 'led', name: 'led_2'} );
     var ScreenQuery = server.where( {type: 'screen', name: 'main-screen'} );
-    var PwrAdpQuery = server.where( {type: 'sensor', name: 'power-adapter'} );
+    var PwrAdpQuery = server.where( {type: 'power-sensor', name: 'power-adapter'} );
+    var EnvQuery = server.where( {type: 'env-sensor', name: 'env-sensor'} );
 
     var allDevices = [
         LED1Query,
         LED2Query,
         ScreenQuery,
-        PwrAdpQuery
+        PwrAdpQuery,
+        EnvQuery
     ]
     // wait for things to come online and then excute callback function
     server.observe( allDevices, allOnline)
          
-    function allOnline(led1, led2, mainscreen) {
+    function allOnline(led1, led2, mainscreen, pwradp, env) {
         console.log('all devices came online');
     }
 }
