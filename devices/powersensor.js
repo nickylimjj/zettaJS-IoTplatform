@@ -7,12 +7,12 @@ var util = require('util');
 var Dev= module.exports = function Driver(name) {
     Device.call(this);
     this.assignedName = name
+    this.voltage = 0;
 };
 util.inherits(Dev, Device);
 
 // initialize
 Dev.prototype.init = function(config) {
-    var voltage = 0;
     config
         .type('power-sensor')
         .name(this.assignedName)
@@ -24,6 +24,12 @@ Dev.prototype.init = function(config) {
         .map('turn-on', this.turnOn)
         .map('turn-off', this.turnOff)
         .monitor('voltage')
+
+        var self = this
+        setInterval(function() {
+            if (self.state  === 'on') self.voltage = 12
+            else self.voltage = 0
+        }, 100)
 };
  
 // implement transition functions

@@ -20,6 +20,16 @@ myScout.prototype.init = function(next) {
 
    // name of device given here
  
+   setTimeout( function() {
+       self.discover(EnvSensor, 'env-sensor');
+       console.log('env-sensor discovered')
+   }, 1000);
+
+   setTimeout( function() {
+       self.discover(PowerSensor, 'power-adapter');
+       console.log('power-adapter discovered')
+   }, 1000);
+
    // after 1s, our scout says it has found our LED
    setTimeout( function() {
        self.discover(LED, 'led_1');
@@ -32,24 +42,6 @@ myScout.prototype.init = function(next) {
        self.discover(Screen, 'main-screen');
        console.log('main-screen discovered')
    }, 1000);
-     
-   setTimeout( function() {
-       self.discover(PowerSensor, 'power-adapter');
-       console.log('power-adapter discovered')
-   }, 1000);
-    
-   setTimeout( function() {
-       self.discover(EnvSensor, 'env-sensor');
-       console.log('env-sensor discovered')
-   }, 1000);
-    
-   var counter = 0;
-   setInterval( function(){
-       counter = counter + 5;
-       console.log(counter+"s has passed.")
-       //self.discover(LED, 'led_' + (counter+1))
-       //console.log('discovered 1 more led.')
-   }, 5000);
    
    // since async, this tells zetta when it is online and ready to proceed
    next();

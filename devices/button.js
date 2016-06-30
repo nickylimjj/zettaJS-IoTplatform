@@ -35,6 +35,7 @@ Dev.prototype.init = function(config) {
 // the callback (cb) lets everyone know that we are done and good to go
 Dev.prototype.turnOn = function(cb) {
     this.state = 'on';
+    console.log('Emergency signal sent')
     cb();
 };
  

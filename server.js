@@ -1,14 +1,15 @@
 // index.js
 var zetta = require('zetta')
-//var LED = require('zetta-led-mock-driver')
 
 var scout = require('./scout')
 var app = require('./app')
+
+var port = process.env.PORT || 8000
 
 zetta()
     .name('silverline')
     .use(scout)
     .use(app)
-    .listen(3000, function(){
-        console.log('Zetta is running on port 3000')
+    .listen(port, function(){
+        console.log('Zetta is running on port ' + port)
     })
