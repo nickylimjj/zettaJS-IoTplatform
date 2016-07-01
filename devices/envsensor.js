@@ -4,44 +4,52 @@
 var Device = require('zetta').Device;
 var util = require('util');
 
-var Dev = module.exports = function Driver(name) {
+var Dev = module.exports = function Driver(opts,name) {
     Device.call(this);
     
     // creating new properties
     this.assignedName = name
-    this.temp = 0 
-    this.sensor_id = 0
+    this.value = opts.value 
+    this.sensorID = opts.sensorID
+    this.ts = opts.ts
+    this.num = opts.num
 };
 util.inherits(Dev, Device);
 
 // initialize
 Dev.prototype.init = function(config) {
-    this.warn('some info message', { hello: 'world' });
+     
+    this.warn('env sensor discovered', { hello: 'world' });
+
+    var self = this
     
     config
         .type('env-sensor')
         .name(this.assignedName)
-        .state('on')
+        .state('ready')
 
     config
-        .when('off', { allow: ['turn-on'] })
-        .when('on', { allow: ['turn-off'] })
-        .map('turn-on', this.turnOn)
-        .map('turn-off', this.turnOff)
-        .stream('value', this.streamValue)
-        .monitor('temp')
+        .when('ready', { allow: ['update'] })
+        .monitor('sensorID')
+        .monitor('ts')
+        .monitor('value')
+        .monitor('num')
+        .map('update', self.update)
 
-        var self = this
-        var counter = 1
-        setInterval(function() {
-            self.temp = counter
-            counter = (counter+1)%3
-        }, 1000)
+    // use POST to update it's own state
+    setInterval(function() {
+        //if (self.state  === 'ready') self.num = opts.num
+        //console.log(opts.num)
+    }, 100)
+    
 
-        
 };
  
 // implement transition functions
+Dev.prototype.update = function(cb) {
+    cb();
+};
+/* 
 // the callback (cb) lets everyone know that we are done and good to go
 Dev.prototype.turnOn = function(cb) {
     this.state = 'on';
@@ -61,3 +69,4 @@ Dev.prototype.streamValue = function(stream) {
         counter = (counter+1)%3
     }, 1000 )
 }
+*/

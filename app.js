@@ -19,18 +19,17 @@ module.exports = function(server) {
         EnvQuery
     ]
 
-	var slDevices = [
-		EnvQuery,
-		PwrAdpQuery
-	]
+    var slDevices = [
+        EnvQuery,
+        PwrAdpQuery
+    ]
+     
     // wait for things to come online and then excute callback function
-    server.observe( allDevices, allOnline)
+    server.observe( PwrAdpQuery, function(pwradp) {
+        console.log('found power adptr')
+    })
+    server.observe( EnvQuery, function(envSensor) {
+        console.log('found env sensor')
+    })
          
-    function allOnline(led1, led2, mainscreen, pwradp, env) {
-        console.log('all devices came online');
-    }
-
-	function slOnline(env, pwradp) {
-        console.log('sl devices came online');
-    }
 }

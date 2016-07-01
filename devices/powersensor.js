@@ -24,12 +24,6 @@ Dev.prototype.init = function(config) {
         .map('turn-on', this.turnOn)
         .map('turn-off', this.turnOff)
         .monitor('voltage')
-
-        var self = this
-        setInterval(function() {
-            if (self.state  === 'on') self.voltage = 12
-            else self.voltage = 0
-        }, 100)
 };
  
 // implement transition functions
