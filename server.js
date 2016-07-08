@@ -10,6 +10,7 @@ zetta()
     .name('silverline')
     .use(scout)
     .use(app)
+    //.link('http://adsc.herokuapp.com')
     .listen(port, function(){
         console.log('Zetta is running on port ' + port)
     })

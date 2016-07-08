@@ -19,7 +19,8 @@ util.inherits(Dev, Device);
 // initialize
 Dev.prototype.init = function(config) {
      
-    this.warn('env sensor discovered', { hello: 'world' });
+    this.warn('env sensor discovered named ' + this.name);
+
 
     var self = this
     
@@ -34,7 +35,7 @@ Dev.prototype.init = function(config) {
         .monitor('ts')
         .monitor('value')
         .monitor('num')
-        .map('update', self.update)
+        .map('update', self.update, [{type: 'bool', name:'value'}, {type: 'number', name: 'num'}])
 
     // use POST to update it's own state
     setInterval(function() {
@@ -46,7 +47,10 @@ Dev.prototype.init = function(config) {
 };
  
 // implement transition functions
-Dev.prototype.update = function(cb) {
+Dev.prototype.update = function(value, num, cb) {
+    console.log('updating device')
+    this.value = value
+    this.num = num
     cb();
 };
 /* 

@@ -1,6 +1,7 @@
 // discover_resources.js
 var urlencode = require('urlencode')
 var EnvSensor = require('./devices/envsensor')
+var PwrAdpSensor = require('./devices/powersensor')
 
 // 
 var DiscoverResource = module.exports = function(scout) {
@@ -9,15 +10,15 @@ var DiscoverResource = module.exports = function(scout) {
 
 DiscoverResource.prototype.init = function(config) {
     config
-        .path('/env')
+        .path('/devices')
         .consumes('application/x-www-form-urlencoded')
         .produces('application/json')
-        .post('/', this.create)
+        .post('/create', this.create)
         .get('/', this.root)
 }
 
 DiscoverResource.prototype.root = function(env, next) {
-    console.log('GET request to /env')
+    console.log('GET request')
     var body = {
         class: ['scout', 'envSensor-scout'],
         actions: [
@@ -37,12 +38,8 @@ DiscoverResource.prototype.root = function(env, next) {
             },
             {
                 name: 'value',
-                type: 'text'
+                type: 'bool'
             },
-            {
-                name: 'num',
-                type: 'number'
-            }
             ]
         }
         ]
@@ -54,7 +51,7 @@ DiscoverResource.prototype.root = function(env, next) {
 }
 
 DiscoverResource.prototype.create = function(env, next) {
-    console.log('POST request to /env')
+    console.log('POST request')
     var self = this
     env.request.getBody(function(err, body) {
         if (err) {
@@ -64,26 +61,53 @@ DiscoverResource.prototype.create = function(env, next) {
 
         //parse form-urlencoded
         var bodyObject = urlencode.parse(body.toString())
-        var opts = {
+        var optsBoard = {
             sensorID: bodyObject.SensorID,
             ts: bodyObject.TS,
             value: bodyObject.value,
             num: bodyObject.num
         }
-
+        
+        var optsZWave = {
+            nodeid : bodyObject.nodeid,
+            name : bodyObject.name,
+        }
+        // Sensor IDs
+        var nodes = {
+            17: {
+                driver: PwrAdpSensor,
+                name: 'power-adapter'
+            },
+            19: {
+                driver: EnvSensor,
+                name:'env-sensor'
+            }
+        }
         // query for known sensorID 
-        var query = self.scout.server.where( { sensorID: opts.sensorID })
+        var query = self.scout.server.where( { nodeid: optsZWave.nodeid })
+            if ( optsZWave.nodeid == 1 ) {
+                return next(env);
+            }
         self.scout.server.find(query, function(err, results) {
-            if (results.length > 1) {
+            console.log('results length: ', results.length)
+            if (err) {
+                console.log('cannot initalize device')
+                     
+            } else if (results.length) {
                 //found in registry
-                self.scout.provision(results[0], EnvSensor, opts, 'env-sensor')
+                console.log('found in registry')
+                self.scout.provision(results[0],
+                        nodes[optsZWave.nodeid]['driver'],
+                        optsZWave,
+                        nodes[optsZWave.nodeid]['name'])
             } else {
                 // not found
                 console.log('enter to discover')
-                self.scout.discover(EnvSensor, opts, 'env-sensor')
+                self.scout.discover(nodes[optsZWave.nodeid]['driver'],
+                        optsZWave,
+                        nodes[optsZWave.nodeid]['name'])
             }
              
-            console.log(results)
             env.response.statusCode = 201
             return next(env)
         })

@@ -6,7 +6,7 @@ var util = require('util')
 var LED = require('./devices/led')
 var Screen = require('./devices/screen')
 var PowerSensor = require('./devices/powersensor')
-//var EnvSensor = require('./devices/envsensor')
+var EnvSensor = require('./devices/envsensor')
 var DiscoverResource = require('./discover-resource')
  
 // inheritance
@@ -24,9 +24,9 @@ myScout.prototype.init = function(next) {
    this.server.httpServer.cloud.add(DiscoverResource,this)
 
    // name of device given here
-   setTimeout( function() {
-       self.discover(PowerSensor, 'power-adapter');
-   }, 1000);
+   //setTimeout( function() {
+       //self.discover(PowerSensor, 'power-adapter');
+   //}, 1000);
     
    /*
    // after 1s, our scout says it has found our LED

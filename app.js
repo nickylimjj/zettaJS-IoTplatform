@@ -10,26 +10,15 @@ module.exports = function(server) {
     var ScreenQuery = server.where( {type: 'screen', name: 'main-screen'} );
     var PwrAdpQuery = server.where( {type: 'power-sensor', name: 'power-adapter'} );
     var EnvQuery = server.where( {type: 'env-sensor', name: 'env-sensor'} );
-
-    var allDevices = [
-        LED1Query,
-        LED2Query,
-        ScreenQuery,
-        PwrAdpQuery,
-        EnvQuery
-    ]
-
-    var slDevices = [
-        EnvQuery,
-        PwrAdpQuery
-    ]
      
     // wait for things to come online and then excute callback function
     server.observe( PwrAdpQuery, function(pwradp) {
         console.log('found power adptr')
     })
+
     server.observe( EnvQuery, function(envSensor) {
         console.log('found env sensor')
     })
+
          
 }
