@@ -4,6 +4,7 @@ var OZW = require('openzwave-shared')
 var urlencode = require('urlencode')
 var querystring = require('querystring')
 var http = require('http')
+var toTitleCase = require('to-title-case')
 
 var zwave = new OZW({
     Logging: false,
@@ -32,6 +33,7 @@ zwave.on('node added', function(nodeid) {
         type: '',
         name: '',
         loc: '',
+        url: '',
         classes: {},
         ready: false
     };
@@ -56,6 +58,18 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
     nodes[nodeid]['name'] = nodeinfo.name;
     nodes[nodeid]['loc'] = nodeinfo.loc;
     nodes[nodeid]['ready'] = true;
+
+    // assigning device url to respective nodes
+    switch (nodeid) {
+        case 17:
+            nodes[nodeid]['url'] = '1ea2f54c-cf01-4db2-8d7a-67b22cc87975';
+            break;
+        case 19:
+            nodes[nodeid]['url'] = '1751b5a8-4283-4089-9c10-83154874ca57';
+            break;
+    }
+     
+    // log Ready information 
     console.log('[R]node #%d: %s, %s', nodeid,
             nodeinfo.manufacturer ? nodeinfo.manufacturer
                 : 'id='+ nodeinfo.manufacturerid,
@@ -83,10 +97,11 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
     // sensor information
     var data = {
         nodeid: nodeid,
-        name: nodeinfo.name
+        type: nodeinfo.type.replace(/\s+/g, ''),
     }
 
     var body = querystring.stringify(data);
+    console.log('creating device with: ' + body)
      
     // POST to zetta server for discovery
     console.log(body)
@@ -101,17 +116,21 @@ zwave.on('value changed', function(nodeid, comclass, value) {
                 nodes[nodeid]['classes'][comclass][value.index]['value'],
                 value['value']);
 
+        var label = value['label'].replace(/\s+/g, '')
+        var action = 'update' + toTitleCase(value['label']).replace(/\s+/g,'')
         var data = {
-            action: 'updateSwitch',
-            [value['label']]: value['value']
+            action: action,
+            [label]: value['value']
         };
 
         console.log("JSON data as a str: " + JSON.stringify(data));
         var body = querystring.stringify(data);
         console.log("Urlencoded data as a str: " + body)
-        //POST to zetta server
+        var dest = '/servers/silverline/devices/' + nodes[nodeid]['url']
+        console.log('dest url: ' + dest)
         
-        post(body, '/servers/silverline/devices/a7d1cfaa-2429-4890-afb1-d4260f9fec1f')
+
+        post(body, dest)
     }
     nodes[nodeid]['classes'][comclass][value.index] = value;
 });
@@ -120,8 +139,8 @@ zwave.on('scan complete', function() {
     console.log('===> scan complete, hit ^C to finish.');
      
     // switch on pwr-adp
-    zwave.setValue(17, 37, 1, 0, true)
-    zwave.setValue( {node_id: 17, class_id: 37, instance: 1, index: 0}, true)
+    //zwave.setValue(17, 37, 1, 0, true)
+    //zwave.setValue( {node_id: 17, class_id: 37, instance: 1, index: 0}, true)
     
 });
 zwave.connect('/dev/ttyUSB0')
@@ -135,12 +154,12 @@ process.on('SIGINT', function() {
 /*
  * POST function to zetta API
  */ 
-function post(body, path) {
+function post(body, path, port) {
     path = path || '/';
     body = body || '<default body>';
     var options = {
         hostname: '10.0.0.4',
-        port: 8000,
+        port: port || 8000,
         path: path,
         method: 'POST',
         headers: {
@@ -150,9 +169,6 @@ function post(body, path) {
 
     var req = http.request(options, function(res) {
         res.setEncoding('utf8');
-        res.on('data', function(body) {
-            console.log('Body: ' + body)
-        });
     })
 
     req.write(body);

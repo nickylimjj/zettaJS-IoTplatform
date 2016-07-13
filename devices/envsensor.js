@@ -4,53 +4,58 @@
 var Device = require('zetta').Device;
 var util = require('util');
 
-var Dev = module.exports = function Driver(opts,name) {
+var Dev = module.exports = function Driver(opts) {
     Device.call(this);
     
     // creating new properties
-    this.assignedName = name
-    this.value = opts.value 
-    this.sensorID = opts.sensorID
-    this.ts = opts.ts
-    this.num = opts.num
+    this.assignedName = opts.name
+    this.nodeid = opts.nodeid
+    this.luminance = opts.luminance 
+    this.temp = opts.temp
+    this.batt = opts.batt
 };
 util.inherits(Dev, Device);
 
 // initialize
 Dev.prototype.init = function(config) {
      
-    this.warn('env sensor discovered named ' + this.name);
+    this.warn('env sensor discovered named ' + this.assignedName);
 
 
     var self = this
     
     config
-        .type('env-sensor')
+        .type('routingbinarysensor')
         .name(this.assignedName)
         .state('ready')
 
     config
-        .when('ready', { allow: ['update'] })
-        .monitor('sensorID')
-        .monitor('ts')
-        .monitor('value')
-        .monitor('num')
-        .map('update', self.update, [{type: 'bool', name:'value'}, {type: 'number', name: 'num'}])
-
-    // use POST to update it's own state
-    setInterval(function() {
-        //if (self.state  === 'ready') self.num = opts.num
-        //console.log(opts.num)
-    }, 100)
-    
-
+        .when('ready', { allow: ['updateBatteryLevel', 'updateLuminance', 'updateTemperature', 'updateMotionSensor'] })
+        .map('updateBatteryLevel', self.updateBatteryLevel, [{type: 'number', name:'BatteryLevel'}])
+        .map('updateLuminance', self.updateLuminance, [{type: 'number', name:'Luminance'}])
+        .map('updateTemperature', self.updateTemperature, [{type: 'number', name: 'Temperature'}])
+        .map('updateMotionSensor', self.updateMotionSensor, [{type: 'number', name: 'Temperature'}])
+        .monitor('batt')
+        .monitor('luminance')
+        .monitor('temp')
 };
  
 // implement transition functions
-Dev.prototype.update = function(value, num, cb) {
-    console.log('updating device')
-    this.value = value
-    this.num = num
+Dev.prototype.updateBatteryLevel = function(batt, cb) {
+    console.log('updating batt')
+    this.batt = batt
+    cb();
+};
+ 
+Dev.prototype.updateLuminance = function(luminance, cb) {
+    console.log('updating luminance')
+    this.luminance = luminance
+    cb();
+};
+ 
+Dev.prototype.updateTemperature = function(temp, cb) {
+    console.log('updating temp')
+    this.temp = temp
     cb();
 };
 /* 

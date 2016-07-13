@@ -4,9 +4,9 @@
 var Device = require('zetta').Device;
 var util = require('util');
 
-var Dev= module.exports = function Driver(opts,name) {
+var Dev= module.exports = function Driver(opts) {
     Device.call(this);
-    this.assignedName = name;
+    this.assignedName = opts.name;
     this.nodeid = opts.nodeid;
     this.power = 0;
     this.exporting = false;
@@ -16,10 +16,10 @@ util.inherits(Dev, Device);
 // initialize
 Dev.prototype.init = function(config) {
      
-    this.warn('power sensor discovered named ' + this.name);
+    this.warn('power sensor discovered named ' + this.assignedName);
      
     config
-        .type('power-sensor')
+        .type('binarypowerswitch')
         .name(this.assignedName)
         .state('off')
 
