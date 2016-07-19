@@ -4,6 +4,7 @@
 // apps are not objects but basic Node.js modules.
 // manages the registry and provisions consistent device id
 
+var debug = require('debug')('app')
 module.exports = function(server) {
     //make queries as specific as possible
     var LED1Query = server.where( {type: 'led', name: 'led_1'} );
@@ -14,11 +15,11 @@ module.exports = function(server) {
      
     // wait for things to come online and then excute callback function
     server.observe( PwrAdpQuery, function(pwradp) {
-        console.log('app.js found power adptr')
+        debug('app.js found power adptr')
     })
 
     server.observe( EnvQuery, function(envSensor) {
-        console.log('app.js found env sensor')
+        debug('app.js found env sensor')
     })
 
          

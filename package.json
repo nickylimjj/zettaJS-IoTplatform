@@ -4,7 +4,7 @@
   "description": "zettaJS cloud server for silverline hub data",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "DEBUG=* node --debug server.js"
   },
   "keywords": [
     "cloud",
@@ -18,7 +18,9 @@
     "openzwave-shared": "^1.2.0",
     "to-title-case": "^1.0.0",
     "urlencode": "^1.1.0",
-    "zetta": "^1.1.0",
-    "zetta-led-mock-driver": "^0.10.0"
+    "zetta": "^1.1.0"
+  },
+  "devDependencies": {
+    "debug": "^2.2.0"
   }
 }

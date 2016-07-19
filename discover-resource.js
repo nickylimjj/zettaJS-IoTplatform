@@ -76,19 +76,6 @@ DiscoverResource.prototype.create = function(env, next) {
             name: bodyObject.name
         }
          
-        // dictiontary to determine which driver to invoke
-        // Sensor IDs
-        var nodes = {
-            17: {
-                driver: PwrAdpSensor,
-                name: 'power-adapter'
-            },
-            19: {
-                driver: EnvSensor,
-                name:'env-sensor'
-            }
-        }
-         
         // types
         var types = {
             binarypowerswitch: {
@@ -101,35 +88,6 @@ DiscoverResource.prototype.create = function(env, next) {
             }
         }
 
-        /*
-        // query for known id
-        var query = self.scout.server.where( { nodeid: optsZWave.nodeid})
-            if ( optsZWave.nodeid === 1 ) {
-                return next(env);
-            }
-        self.scout.server.find(query, function(err, results) {
-            console.log('results length: ', results.length)
-            if (err) {
-                console.log('cannot initalize device')
-                     
-            } else if (results.length) {
-                //found in registry
-                console.log('found in registry')
-                self.scout.provision(results[0],
-                        nodes[optsZWave.nodeid]['driver'],
-                        optsZWave,
-                        nodes[optsZWave.nodeid]['name'])
-                env.response.statusCode = 200
-            } else {
-                // not found
-                console.log('enter to discover')
-                self.scout.discover(
-                        nodes[optsZWave.nodeid]['driver'],
-                        optsZWave,
-                        nodes[optsZWave.nodeid]['name'])
-                env.response.statusCode = 201
-            }
-        */
              
         // query for known type
         var query = self.scout.server.where( { type: optsZWave.type})

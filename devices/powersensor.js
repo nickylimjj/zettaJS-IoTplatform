@@ -3,6 +3,8 @@
 
 var Device = require('zetta').Device;
 var util = require('util');
+var debug = require('debug')('[dev] powerSensor')
+var zwave = require('../zwave')
 
 var Dev= module.exports = function Driver(opts) {
     Device.call(this);
@@ -24,54 +26,76 @@ Dev.prototype.init = function(config) {
         .state('off')
 
     config
-        .when('off', { allow: ['updateSwitch', 'updatePower', 'turn-on'] })
-        .when('on', { allow: ['updateSwitch', 'updatePower', 'turn-off'] })
+        .when('off', { allow: ['turn-on', 'updateSwitch', 'removeNode'] })
+        .when('on', { allow: ['updateSwitch', 
+            'updatePower', 
+            'turn-off', 
+            'getGroupInfo',
+            'removeNode'
+        ] })
+         
         .map('turn-on', this.turnOn)
         .map('turn-off', this.turnOff)
         .map('updateSwitch', this.updateSwitch, [
                 {type: 'string', name:'Switch'}
-                //{type: 'bool', name:'Exporting'},
-                //{type: 'number', name: 'Power'}
         ])
         .map('updatePower', this.updatePower, [
                 {type: 'number', name: 'Power'}
         ])
+         
+        .map('getGroupInfo', this.getGroupInfo)
+        .map('removeNode', this.removeNode)
         .monitor('power')
 };
  
 // implement transition functions
 // the callback (cb) lets everyone know that we are done and good to go
 
-Dev.prototype.updateSwitch = function(Switch, cb) {
-    console.log('updating power adapter state');
-    console.log(arguments)
+Dev.prototype.updateSwitch = function (Switch, cb) {
+    debug(this.nodeid)
     if (Switch === 'true') {
-        console.log('on')
+        debug('on')
         this.state = 'on';
-        //this.exporting = Exporting;
-        //this.power = Power;
+        zwave.setValue( {node_id: this.nodeid, class_id: 37, instance: 1, index: 0}, true)
     } else if (Switch === 'false'){
-        console.log('off')
+        debug('off')
         this.state = 'off';
+        zwave.setValue( {node_id: this.nodeid, class_id: 37, instance: 1, index: 0}, false)
     } else {
-        console.log('invalid input')
+        debug('invalid input')
     }
-    cb();
+    cb()
 }
  
-Dev.prototype.updatePower = function(Power, cb) {
-    console.log('updating power');
+Dev.prototype.updatePower = function (Power, cb) {
     this.power = Power;
-    cb();
+    zwave.setValue( {node_id: this.nodeid, class_id: 50, instance: 1, index: 0}, Power)
+         
+    cb()
 }
  
-Dev.prototype.turnOn = function(cb) {
-    this.state = 'on';
-    cb();
-};
+Dev.prototype.turnOn = function (cb) {
+    this.state = 'on'
+    this.updateSwitch('true',cb)
+}
  
-Dev.prototype.turnOff = function(cb) {
-    this.state = 'off';
-    cb();
-};
+Dev.prototype.turnOff = function (cb) {
+    this.state = 'off'
+    this.updateSwitch('false',cb)
+}
  
+Dev.prototype.getGroupInfo = function (cb) {
+    debug('---')
+    debug('has node failed? ' + zwave.hasNodeFailed(this.nodeid))
+    debug('controller stuff:')
+    debug(zwave.getControllerNodeId())
+    debug(zwave.getLibraryVersion())
+    debug('---')
+    cb()
+}
+
+Dev.prototype.removeNode = function (cb) {
+    zwave.removeFailedNode(this.nodeid)
+    zwave.removeNode()
+    cb()
+}

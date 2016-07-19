@@ -1,12 +1,17 @@
 // zwave.js
 // API for zwave data
+
 var OZW = require('openzwave-shared')
-var urlencode = require('urlencode')
 var querystring = require('querystring')
 var http = require('http')
 var toTitleCase = require('to-title-case')
+var debug = require('debug')('zwave')
+//var urlencode = require('urlencode')
+ 
+var config = require('./config')
+var deviceIDs = require('./device-ids')
 
-var zwave = new OZW({
+var zwave = module.exports = new OZW({
     Logging: false,
     ConsoleOutput: true
 })
@@ -37,7 +42,8 @@ zwave.on('node added', function(nodeid) {
         classes: {},
         ready: false
     };
-    console.log('node added')
+    debug('node #%d added', nodeid)
+    // discover it on zetta
 });
 
 zwave.on('value added', function(nodeid, comclass, value) {
@@ -49,6 +55,7 @@ zwave.on('value added', function(nodeid, comclass, value) {
 zwave.on('node ready', function(nodeid, nodeinfo) {
     if (nodes[nodeid]['ready'] === true)
         return;
+    debug(nodeinfo)
     nodes[nodeid]['manufacturer'] = nodeinfo.manufacturer;
     nodes[nodeid]['manufacturerid'] = nodeinfo.manufacturerid;
     nodes[nodeid]['product'] = nodeinfo.product;
@@ -59,27 +66,36 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
     nodes[nodeid]['loc'] = nodeinfo.loc;
     nodes[nodeid]['ready'] = true;
 
+
+    //powerURLs = [
+        //'913e2ac2-82e2-4391-9c8d-667cb1a251c9',
+    //]
+    //envURLs = [
+        //'1751b5a8-4283-4089-9c10-83154874ca57',
+    //]
+    
     // assigning device url to respective nodes
-    switch (nodeid) {
-        case 17:
-            nodes[nodeid]['url'] = '1ea2f54c-cf01-4db2-8d7a-67b22cc87975';
-            break;
-        case 19:
-            nodes[nodeid]['url'] = '1751b5a8-4283-4089-9c10-83154874ca57';
-            break;
+    switch (nodes[nodeid]['type']) {
+        case 'Binary Power Switch':
+            nodes[nodeid]['url'] = deviceIDs.powerURLs.pop(0)
+            break
+        case 'Routing Binary Sensor':
+            nodes[nodeid]['url'] = deviceIDS.envURLs.pop(0)
+            break
     }
-     
+
     // log Ready information 
-    console.log('[R]node #%d: %s, %s', nodeid,
+    debug('[R]node #%d: %s, %s', nodeid,
             nodeinfo.manufacturer ? nodeinfo.manufacturer
                 : 'id='+ nodeinfo.manufacturerid,
             nodeinfo.product ? nodeinfo.product
                 : 'product='+ nodeinfo.productid +
                   ', type=' + nodeinfo.producttype);
-    console.log('[R]node #%d: name="%s", type="%s", location="%s"', nodeid,
+    debug('[R]node #%d: name="%s", type="%s", location="%s",  url="%s"', nodeid,
             nodeinfo.name,
             nodeinfo.type,
-            nodeinfo.loc)
+            nodeinfo.loc,
+            nodes[nodeid]['url'])
         for (comclass in nodes[nodeid]['classes']) {
             // Polling for some command classes
             switch (comclass) {
@@ -89,9 +105,9 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
                     break;
             }
             var values = nodes[nodeid]['classes'][comclass];
-            console.log('[P]node #%d: class %d', nodeid, comclass);
+            debug('[P]node #%d: class %d', nodeid, comclass);
             for (idx in values)
-                console.log('[P]node #%d: %s=%s', nodeid, values[idx]['label'], values[idx]['value'])
+                debug('[P]node #%d: %s=%s', nodeid, values[idx]['label'], values[idx]['value'])
         }
 
     // sensor information
@@ -101,21 +117,33 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
     }
 
     var body = querystring.stringify(data);
-    console.log('creating device with: ' + body)
+    debug('creating device with: ' + body)
      
     // POST to zetta server for discovery
-    console.log(body)
+    debug(body)
     post(body, '/devices/create')
     
 });
 
+
+zwave.on('scan complete', function() {
+    console.log('===> scan complete, hit ^C to finish.');
+     
+    
+});
+ 
 zwave.on('value changed', function(nodeid, comclass, value) {
     if (nodes[nodeid]['ready']) {
-        console.log('node #%d: changed (comclass,label): %d:%s:%s->%s', nodeid, comclass,
+        debug('node #%d: changed (comclass,label): %d:%s:%s->%s', nodeid, comclass,
                 value['label'],
                 nodes[nodeid]['classes'][comclass][value.index]['value'],
                 value['value']);
 
+        if ( nodes[nodeid]['classes'][comclass][value.index]['value'] === value['value'] ){
+
+            debug('no change')
+            return;
+        }
         var label = value['label'].replace(/\s+/g, '')
         var action = 'update' + toTitleCase(value['label']).replace(/\s+/g,'')
         var data = {
@@ -123,25 +151,16 @@ zwave.on('value changed', function(nodeid, comclass, value) {
             [label]: value['value']
         };
 
-        console.log("JSON data as a str: " + JSON.stringify(data));
+        debug("JSON data as a str: " + JSON.stringify(data));
         var body = querystring.stringify(data);
-        console.log("Urlencoded data as a str: " + body)
+        debug("Urlencoded data as a str: " + body)
         var dest = '/servers/silverline/devices/' + nodes[nodeid]['url']
-        console.log('dest url: ' + dest)
+        debug('dest url: ' + dest)
         
 
         post(body, dest)
     }
     nodes[nodeid]['classes'][comclass][value.index] = value;
-});
-
-zwave.on('scan complete', function() {
-    console.log('===> scan complete, hit ^C to finish.');
-     
-    // switch on pwr-adp
-    //zwave.setValue(17, 37, 1, 0, true)
-    //zwave.setValue( {node_id: 17, class_id: 37, instance: 1, index: 0}, true)
-    
 });
 zwave.connect('/dev/ttyUSB0')
 
@@ -158,8 +177,8 @@ function post(body, path, port) {
     path = path || '/';
     body = body || '<default body>';
     var options = {
-        hostname: '10.0.0.4',
-        port: port || 8000,
+        hostname: config.hostname,
+        port: port || config.port,
         path: path,
         method: 'POST',
         headers: {
