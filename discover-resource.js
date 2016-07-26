@@ -2,6 +2,7 @@
 var urlencode = require('urlencode')
 var EnvSensor = require('./devices/envsensor')
 var PwrAdpSensor = require('./devices/powersensor')
+var debug = require('debug')('discover-resource')
 
 // 
 var DiscoverResource = module.exports = function(scout) {
@@ -19,7 +20,7 @@ DiscoverResource.prototype.init = function(config) {
 }
 
 DiscoverResource.prototype.root = function(env, next) {
-    console.log('GET request')
+    debug('GET request')
     var body = {
         class: ['scout'],
         actions: [
@@ -53,7 +54,7 @@ DiscoverResource.prototype.root = function(env, next) {
 }
 
 DiscoverResource.prototype.create = function(env, next) {
-    console.log('POST request')
+    debug('POST request')
     var self = this
     env.request.getBody(function(err, body) {
         if (err) {
@@ -95,13 +96,13 @@ DiscoverResource.prototype.create = function(env, next) {
                 return next(env);
             }
         self.scout.server.find(query, function(err, results) {
-            console.log('results length: ', results.length)
+            debug('results length: ', results.length)
             if (err) {
-                console.log('cannot initalize device')
+                debug('cannot initalize device')
                      
             } else if (results.length) {
                 //found in registry
-                console.log('found in registry')
+                debug('found in registry')
                 self.scout.provision(results[0],
                         types[optsZWave.type]['driver'],
                         optsZWave,
@@ -109,7 +110,7 @@ DiscoverResource.prototype.create = function(env, next) {
                 env.response.statusCode = 200
             } else {
                 // not found
-                console.log('enter to discover')
+                debug('enter to discover')
                 self.scout.discover(
                         types[optsZWave.type]['driver'],
                         optsZWave,
